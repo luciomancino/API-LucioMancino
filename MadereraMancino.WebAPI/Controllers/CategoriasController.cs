@@ -2,11 +2,14 @@
 using MadereraMancino.Application;
 using MadereraMancino.Application.Dtos.Categoria;
 using MadereraMancino.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MadereraMancino.WebAPI.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoriasController : ControllerBase
