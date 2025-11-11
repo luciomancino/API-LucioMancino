@@ -2,44 +2,71 @@
 using MadereraMancino.Application;
 using MadereraMancino.Application.Dtos.Venta;
 using MadereraMancino.Entities;
+using MadereraMancino.Entities.MicrosoftIdentity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MadereraMancino.WebAPI.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
     public class VentasController : ControllerBase
     {
+        private readonly UserManager<User> _userManager;
         private readonly ILogger<VentasController> _logger;
         private readonly IApplication<Venta> _venta;
         private readonly IMapper _mapper;
-        public VentasController(ILogger<VentasController> logger, IApplication<Venta> venta, IMapper mapper)
+        public VentasController(ILogger<VentasController> logger, UserManager<User> userManager, IApplication<Venta> venta, IMapper mapper)
         {
             _logger = logger;
             _venta = venta;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(_mapper.Map<IList<VentaResponseDto>>(_venta.GetAll()));
+            var id = User.FindFirst("Id").Value.ToString();
+            var user = _userManager.FindByIdAsync(id).Result;
+            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                await _userManager.IsInRoleAsync(user, "Cliente"))
+            {
+                var name = User.FindFirst("name");
+                var a = User.Claims;
+                return Ok(_mapper.Map<IList<VentaResponseDto>>(_venta.GetAll()));
+            }
+            return Unauthorized();
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetById(int? id)
         {
             if (!id.HasValue)
             {
                 return BadRequest();
             }
-            var venta = _venta.GetById(id.Value);
-            if (venta is null)
-                return NotFound();
-            return Ok(_mapper.Map<VentaResponseDto>(venta));
+            var idUser = User.FindFirst("Id")?.Value;
+            var user = await _userManager.FindByIdAsync(idUser);
+
+            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                await _userManager.IsInRoleAsync(user, "Cliente"))
+            {
+                var venta = _venta.GetById(id.Value);
+                if (venta is null)
+                    return NotFound();
+                return Ok(_mapper.Map<VentaResponseDto>(venta));
+            }
+            return Unauthorized();
         }
 
         [HttpPost]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(VentaRequestDto ventaRequestDto)
         {
             if (!ModelState.IsValid)
@@ -50,6 +77,7 @@ namespace MadereraMancino.WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? id, VentaRequestDto ventaRequestDto)
         {
             if (!id.HasValue)
@@ -65,6 +93,7 @@ namespace MadereraMancino.WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? id)
         {
             if (!id.HasValue)

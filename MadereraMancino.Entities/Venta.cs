@@ -28,5 +28,25 @@ namespace MadereraMancino.Entities
 
         public decimal Total { get; set; }
         public virtual ICollection<DetalleVenta> DetallesVenta { get; set; }
+
+        #region gettersAndSetters
+        public void SetFecha(DateTime fecha)
+        {
+            if (fecha > DateTime.Now)
+            {
+                throw new ArgumentException("La fecha de la venta no puede ser futura.");
+            }
+            Fecha = fecha;
+        }
+
+        public void SetTotal(decimal total)
+        {
+            if (total < 0)
+            {
+                throw new ArgumentException("El total de la venta no puede ser negativo.");
+            }
+            Total = total;
+        }
+        #endregion
     }
 }

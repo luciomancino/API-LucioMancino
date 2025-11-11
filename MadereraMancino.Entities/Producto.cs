@@ -36,5 +36,41 @@ namespace MadereraMancino.Entities
         public virtual ICollection<CategoriaPorProducto> CategoriasPorProducto { get; set; }
         public virtual ICollection<ProveedorPorProducto> ProveedoresPorProducto { get; set; }
         public virtual ICollection<DetalleVenta> DetallesVenta { get; set; }
+
+        #region gettersAndSetters
+        public void SetNombre(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                throw new ArgumentException("El nombre no puede estar vacío o ser nulo.");
+            }
+            Nombre = nombre;
+        }
+        public void SetDescripcion(string descripcion)
+        {
+            if (string.IsNullOrWhiteSpace(descripcion))
+            {
+                throw new ArgumentException("La descripción no puede estar vacía o ser nula.");
+            }
+            Descripcion = descripcion;
+        }
+        public void SetPrecio(decimal precio)
+        {
+            if (precio < 0)
+            {
+                throw new ArgumentException("El precio no puede ser negativo.");
+            }
+            Precio = precio;
+        }
+        public void SetStock(int stock)
+        {
+            if (stock < 0)
+            {
+                throw new ArgumentException("El stock no puede ser negativo.");
+            }
+            Stock = stock;
+        }
+        #endregion
+
     }
 }

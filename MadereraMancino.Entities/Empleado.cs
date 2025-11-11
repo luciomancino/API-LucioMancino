@@ -24,5 +24,28 @@ namespace MadereraMancino.Entities
         public string Apellido { get; set; }
 
         public virtual ICollection<Venta> Ventas { get; set; }
+
+        #region gettersAndSetters
+        public void SetNombre(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                throw new ArgumentException("El nombre no puede estar vacío o ser nulo.");
+            }
+            Nombre = nombre;
+        }
+        public void SetApellido(string apellido)
+        {
+            if (string.IsNullOrWhiteSpace(apellido))
+            {
+                throw new ArgumentException("El apellido no puede estar vacío o ser nulo.");
+            }
+            Apellido = apellido;
+        }
+        public string GetNombreCompleto()
+        {
+            return string.Join(", ", Apellido, Nombre);
+        }
+        #endregion
     }
 }

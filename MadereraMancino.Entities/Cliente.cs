@@ -27,5 +27,32 @@ namespace MadereraMancino.Entities
         public string Telefono { get; set; }
 
         public virtual ICollection<Venta> Ventas { get; set; }
+
+        #region gettersAndSetters
+        public void SetNombre(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                throw new ArgumentException("El nombre no puede estar vacío o ser nulo.");
+            }
+            Nombre = nombre;
+        }
+        public void SetDireccion(string direccion)
+        {
+            if (string.IsNullOrWhiteSpace(direccion))
+            {
+                throw new ArgumentException("La dirección no puede estar vacía o ser nula.");
+            }
+            Direccion = direccion;
+        }
+        public void SetTelefono(string telefono)
+        {
+            if (string.IsNullOrWhiteSpace(telefono))
+            {
+                throw new ArgumentException("El teléfono no puede estar vacío o ser nulo.");
+            }
+            Telefono = telefono;
+        }
+        #endregion
     }
 }

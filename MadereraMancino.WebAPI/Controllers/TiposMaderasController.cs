@@ -2,44 +2,71 @@
 using MadereraMancino.Application;
 using MadereraMancino.Application.Dtos.TipoMadera;
 using MadereraMancino.Entities;
+using MadereraMancino.Entities.MicrosoftIdentity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MadereraMancino.WebAPI.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
     public class TiposMaderasController : ControllerBase
     {
+        private readonly UserManager<User> _userManager;
         private readonly ILogger<TiposMaderasController> _logger;
         private readonly IApplication<TipoMadera> _tipoMadera;
         private readonly IMapper _mapper;
-        public TiposMaderasController(ILogger<TiposMaderasController> logger, IApplication<TipoMadera> tipoMadera, IMapper mapper)
+        public TiposMaderasController(ILogger<TiposMaderasController> logger, UserManager<User> userManager, IApplication<TipoMadera> tipoMadera, IMapper mapper)
         {
             _logger = logger;
             _tipoMadera = tipoMadera;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(_mapper.Map<IList<TipoMaderaResponseDto>>(_tipoMadera.GetAll()));
+            var id = User.FindFirst("Id").Value.ToString();
+            var user = _userManager.FindByIdAsync(id).Result;
+            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                await _userManager.IsInRoleAsync(user, "Cliente"))
+            {
+                var name = User.FindFirst("name");
+                var a = User.Claims;
+                return Ok(_mapper.Map<IList<TipoMaderaResponseDto>>(_tipoMadera.GetAll()));
+            }
+            return Unauthorized();
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetById(int? id)
         {
             if (!id.HasValue)
             {
                 return BadRequest();
             }
-            var tipoMadera = _tipoMadera.GetById(id.Value);
-            if (tipoMadera is null)
-                return NotFound();
-            return Ok(_mapper.Map<TipoMaderaResponseDto>(tipoMadera));
+            var idUser = User.FindFirst("Id")?.Value;
+            var user = await _userManager.FindByIdAsync(idUser);
+
+            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                await _userManager.IsInRoleAsync(user, "Cliente"))
+            {
+                var tipoMadera = _tipoMadera.GetById(id.Value);
+                if (tipoMadera is null)
+                    return NotFound();
+                return Ok(_mapper.Map<TipoMaderaResponseDto>(tipoMadera));
+            }
+            return Unauthorized();
         }
 
         [HttpPost]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(TipoMaderaRequestDto tipoMaderaRequestDto)
         {
             if (!ModelState.IsValid)
@@ -50,6 +77,7 @@ namespace MadereraMancino.WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? id, TipoMaderaRequestDto tipoMaderaRequestDto)
         {
             if (!id.HasValue)
@@ -66,6 +94,7 @@ namespace MadereraMancino.WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? id)
         {
             if (!id.HasValue)
