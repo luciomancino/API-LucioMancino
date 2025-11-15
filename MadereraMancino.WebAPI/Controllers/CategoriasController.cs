@@ -33,80 +33,122 @@ namespace MadereraMancino.WebAPI.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetAll()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<CategoriaResponseDto>>(_categoria.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<CategoriaResponseDto>>(_categoria.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todas las Categorias.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+
+            }
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetById(int? id)
         {
-            if (!id.HasValue)
+            try
             {
-                return BadRequest();
-            }
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
+                if (!id.HasValue)
+                {
+                    return BadRequest();
+                }
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
-            {
-                var categoria = _categoria.GetById(id.Value);
-                if (categoria is null)
-                    return NotFound();
-                return Ok(_mapper.Map<CategoriaResponseDto>(categoria));
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var categoria = _categoria.GetById(id.Value);
+                    if (categoria is null)
+                        return NotFound();
+                    return Ok(_mapper.Map<CategoriaResponseDto>(categoria));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener la Categoria por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(CategoriaRequestDto categoriaRequestDto)
         {
-            if (!ModelState.IsValid)
-            { return BadRequest(); }
-            var categoria = _mapper.Map<Categoria>(categoriaRequestDto);
-            _categoria.Save(categoria);
-            return Ok(categoria.Id);
+            try
+            {
+                if (!ModelState.IsValid)
+                { return BadRequest(); }
+                var categoria = _mapper.Map<Categoria>(categoriaRequestDto);
+                _categoria.Save(categoria);
+                return Ok(categoria.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear la Categoria.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? id, CategoriaRequestDto categoriaRequestDto)
         {
-            if (!id.HasValue)
-            { return BadRequest(); }
-            if (!ModelState.IsValid)
-            { return BadRequest(); }
-            Categoria categoriaBack = _categoria.GetById(id.Value);
-            if (categoriaBack is null)
-            { return NotFound(); }
-            categoriaBack= _mapper.Map<Categoria>(categoriaRequestDto);
-            _categoria.Save(categoriaBack);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                { return BadRequest(); }
+                if (!ModelState.IsValid)
+                { return BadRequest(); }
+                Categoria categoriaBack = _categoria.GetById(id.Value);
+                if (categoriaBack is null)
+                { return NotFound(); }
+                categoriaBack = _mapper.Map<Categoria>(categoriaRequestDto);
+                _categoria.Save(categoriaBack);
+                return Ok(categoriaBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar la Categoria.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? id)
         {
-            if (!id.HasValue)
-            { return BadRequest(); }
-            if (!ModelState.IsValid)
-            { return BadRequest(); }
-            var categoriaBack = _categoria.GetById(id.Value);
-            if (categoriaBack is null)
-                return NotFound();
-            _categoria.Delete(categoriaBack.Id);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                { return BadRequest(); }
+                if (!ModelState.IsValid)
+                { return BadRequest(); }
+                var categoriaBack = _categoria.GetById(id.Value);
+                if (categoriaBack is null)
+                    return NotFound();
+                _categoria.Delete(categoriaBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al eliminar la Categoria.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 }

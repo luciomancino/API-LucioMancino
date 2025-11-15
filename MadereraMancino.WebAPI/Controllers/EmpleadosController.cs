@@ -33,80 +33,120 @@ namespace MadereraMancino.WebAPI.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetAll()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<EmpleadoResponseDto>>(_empleado.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<EmpleadoResponseDto>>(_empleado.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todas los Empleados.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetById(int? id)
         {
-            if (!id.HasValue)
+            try
             {
-                return BadRequest();
-            }
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
+                if (!id.HasValue)
+                {
+                    return BadRequest();
+                }
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
-            {
-                var empleado = _empleado.GetById(id.Value);
-                if (empleado is null)
-                    return NotFound();
-                return Ok(_mapper.Map<EmpleadoResponseDto>(empleado));
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var empleado = _empleado.GetById(id.Value);
+                    if (empleado is null)
+                        return NotFound();
+                    return Ok(_mapper.Map<EmpleadoResponseDto>(empleado));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el Empleado por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(EmpleadoRequestDto empleadoRequestDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var empleado = _mapper.Map<Empleado>(empleadoRequestDto);
-            _empleado.Save(empleado);
-            return Ok(empleado.Id);
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var empleado = _mapper.Map<Empleado>(empleadoRequestDto);
+                _empleado.Save(empleado);
+                return Ok(empleado.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear el Empleado.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? id, EmpleadoRequestDto empleadoRequestDto)
         {
-            if (!id.HasValue)
-            { return BadRequest(); }
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var empleadoBack = _empleado.GetById(id.Value);
-            if (empleadoBack is null)
-                return NotFound();
-            empleadoBack = _mapper.Map<Empleado>(empleadoRequestDto);
-            _empleado.Save(empleadoBack);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                { return BadRequest(); }
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var empleadoBack = _empleado.GetById(id.Value);
+                if (empleadoBack is null)
+                    return NotFound();
+                empleadoBack = _mapper.Map<Empleado>(empleadoRequestDto);
+                _empleado.Save(empleadoBack);
+                return Ok(empleadoBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar el Empleado.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? id)
         {
-            if (!id.HasValue)
-            { return BadRequest(); }
-            if (!ModelState.IsValid)
-            { return BadRequest(); }
-            var empleadoBack = _empleado.GetById(id.Value);
-            if (empleadoBack is null)
-                return NotFound();
-            _empleado.Delete(empleadoBack.Id);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                { return BadRequest(); }
+                if (!ModelState.IsValid)
+                { return BadRequest(); }
+                var empleadoBack = _empleado.GetById(id.Value);
+                if (empleadoBack is null)
+                    return NotFound();
+                _empleado.Delete(empleadoBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al borrar el Empleado.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 }

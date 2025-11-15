@@ -29,8 +29,7 @@ namespace MadereraMancino.WebAPI
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "MadereraMancino.WebAPI", Version = "v1" });
-                //var filePath = Path.Combine(System.AppContext.BaseDirectory, "NutricionProfesional.WebApi.xml");
-                //c.IncludeXmlComments(filePath);
+
                 var jwtSecurityScheme = new OpenApiSecurityScheme
                 {
                     BearerFormat = "JWT",

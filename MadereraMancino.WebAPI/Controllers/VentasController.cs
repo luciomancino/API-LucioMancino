@@ -31,80 +31,120 @@ namespace MadereraMancino.WebAPI.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetAll()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<VentaResponseDto>>(_venta.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<VentaResponseDto>>(_venta.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todas las Ventas.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetById(int? id)
         {
-            if (!id.HasValue)
+            try
             {
-                return BadRequest();
-            }
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
+                if (!id.HasValue)
+                {
+                    return BadRequest();
+                }
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
-            {
-                var venta = _venta.GetById(id.Value);
-                if (venta is null)
-                    return NotFound();
-                return Ok(_mapper.Map<VentaResponseDto>(venta));
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var venta = _venta.GetById(id.Value);
+                    if (venta is null)
+                        return NotFound();
+                    return Ok(_mapper.Map<VentaResponseDto>(venta));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener la Venta por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(VentaRequestDto ventaRequestDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var venta = _mapper.Map<Venta>(ventaRequestDto);
-            _venta.Save(venta);
-            return Ok(venta.Id);
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var venta = _mapper.Map<Venta>(ventaRequestDto);
+                _venta.Save(venta);
+                return Ok(venta.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear la Venta.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? id, VentaRequestDto ventaRequestDto)
         {
-            if (!id.HasValue)
-            { return BadRequest(); }
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var ventaBack = _venta.GetById(id.Value);
-            if (ventaBack is null)
-                return NotFound();
-            ventaBack = _mapper.Map<Venta>(ventaRequestDto);
-            _venta.Save(ventaBack);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                { return BadRequest(); }
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var ventaBack = _venta.GetById(id.Value);
+                if (ventaBack is null)
+                    return NotFound();
+                ventaBack = _mapper.Map<Venta>(ventaRequestDto);
+                _venta.Save(ventaBack);
+                return Ok(ventaBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar la Venta.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? id)
         {
-            if (!id.HasValue)
-                return BadRequest();
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var ventaBack = _venta.GetById(id.Value);
-            if (ventaBack is null)
-                return NotFound();
-            _venta.Delete(ventaBack.Id);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                    return BadRequest();
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var ventaBack = _venta.GetById(id.Value);
+                if (ventaBack is null)
+                    return NotFound();
+                _venta.Delete(ventaBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al borrar la Venta.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 }

@@ -124,12 +124,14 @@ namespace MadereraMancino.WebAPI.Controllers.Identity
                     {
                         try
                         {
+                            var roles = await _userManager.GetRolesAsync(existeUsuario);
                             var parametros = new TokenParameters()
                             {
                                 Id = existeUsuario.Id.ToString(),
                                 PaswordHash = existeUsuario.PasswordHash,
                                 UserName = existeUsuario.UserName,
-                                Email = existeUsuario.Email
+                                Email = existeUsuario.Email,
+                                Roles = roles
                             };
                             var jwt = _servicioToken.GenerateJwtTokens(parametros);
                             return Ok(new LoginUserResponseDto()

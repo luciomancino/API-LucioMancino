@@ -33,78 +33,118 @@ namespace MadereraMancino.WebAPI.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetAll()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<ClienteResponseDto>>(_cliente.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<ClienteResponseDto>>(_cliente.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todas los Clientes.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetById(int? id)
         {
-            if (!id.HasValue)
+            try
             {
-                return BadRequest();
-            }
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
+                if (!id.HasValue)
+                {
+                    return BadRequest();
+                }
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
-            {
-                Cliente cliente = _cliente.GetById(id.Value);
-                if (cliente is null)
-                    return NotFound();
-                return Ok(_mapper.Map<ClienteResponseDto>(cliente));
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    Cliente cliente = _cliente.GetById(id.Value);
+                    if (cliente is null)
+                        return NotFound();
+                    return Ok(_mapper.Map<ClienteResponseDto>(cliente));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el Cliente por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(ClienteRequestDto clienteRequesDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var cliente = _mapper.Map<Cliente>(clienteRequesDto);
-            _cliente.Save(cliente);
-            return Ok(cliente.Id);
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var cliente = _mapper.Map<Cliente>(clienteRequesDto);
+                _cliente.Save(cliente);
+                return Ok(cliente.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear el Cliente.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? id, ClienteRequestDto clienteRequestDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var clienteBack = _cliente.GetById(id.Value);
-            if (clienteBack is null)
-                return NotFound();
-            clienteBack= _mapper.Map<Cliente>(clienteRequestDto);
-            _cliente.Save(clienteBack);
-            return Ok();
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var clienteBack = _cliente.GetById(id.Value);
+                if (clienteBack is null)
+                    return NotFound();
+                clienteBack = _mapper.Map<Cliente>(clienteRequestDto);
+                _cliente.Save(clienteBack);
+                return Ok(clienteBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar el Cliente.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? id)
         {
-            if (!id.HasValue)
-                return BadRequest();
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var clienteBack = _cliente.GetById(id.Value);
-            if (clienteBack is null)
-                return NotFound();
-            _cliente.Delete(clienteBack.Id);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                    return BadRequest();
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var clienteBack = _cliente.GetById(id.Value);
+                if (clienteBack is null)
+                    return NotFound();
+                _cliente.Delete(clienteBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al borrar el Cliente.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 }

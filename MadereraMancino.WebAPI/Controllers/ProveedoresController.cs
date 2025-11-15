@@ -33,80 +33,120 @@ namespace MadereraMancino.WebAPI.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetAll()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<ProveedorResponseDto>>(_proveedor.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<ProveedorResponseDto>>(_proveedor.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todos los Proveedores.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetById(int? id)
         {
-            if (!id.HasValue)
+            try
             {
-                return BadRequest();
-            }
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
+                if (!id.HasValue)
+                {
+                    return BadRequest();
+                }
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
-            {
-                var proveedor = _proveedor.GetById(id.Value);
-                if (proveedor is null)
-                    return NotFound();
-                return Ok(_mapper.Map<ProveedorResponseDto>(proveedor));
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var proveedor = _proveedor.GetById(id.Value);
+                    if (proveedor is null)
+                        return NotFound();
+                    return Ok(_mapper.Map<ProveedorResponseDto>(proveedor));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el Proveedor por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(ProveedorRequestDto proveedorRequestDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var proveedor = _mapper.Map<Proveedor>(proveedorRequestDto);
-            _proveedor.Save(proveedor);
-            return Ok(proveedor.Id);
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var proveedor = _mapper.Map<Proveedor>(proveedorRequestDto);
+                _proveedor.Save(proveedor);
+                return Ok(proveedor.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear el Proveedor.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? id, ProveedorRequestDto proveedorRequestDto)
         {
-            if (!id.HasValue)
-            { return BadRequest(); }
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var proveedorBack = _proveedor.GetById(id.Value);
-            if (proveedorBack is null)
-                return NotFound();
-            proveedorBack = _mapper.Map<Proveedor>(proveedorRequestDto);
-            _proveedor.Save(proveedorBack);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                { return BadRequest(); }
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var proveedorBack = _proveedor.GetById(id.Value);
+                if (proveedorBack is null)
+                    return NotFound();
+                proveedorBack = _mapper.Map<Proveedor>(proveedorRequestDto);
+                _proveedor.Save(proveedorBack);
+                return Ok(proveedorBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar el Proveedor.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? id)
         {
-            if (!id.HasValue)
-                return BadRequest();
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var proveedorBack = _proveedor.GetById(id.Value);
-            if (proveedorBack is null)
-                return NotFound();
-            _proveedor.Delete(proveedorBack.Id);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                    return BadRequest();
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var proveedorBack = _proveedor.GetById(id.Value);
+                if (proveedorBack is null)
+                    return NotFound();
+                _proveedor.Delete(proveedorBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al borrar el Proveedor.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 }

@@ -27,9 +27,7 @@ namespace MadereraMancino.Services.AuthServices
             var jwtTokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtConfig.Secret);
             var claims = new List<Claim>
-            {
-
-                
+            {  
                     new Claim("Id", parametros.Id),
                     new Claim(JwtRegisteredClaimNames.Sub, parametros.Id),
                     new Claim(JwtRegisteredClaimNames.Name, parametros.UserName),
@@ -46,6 +44,8 @@ namespace MadereraMancino.Services.AuthServices
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(4),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
+
             };
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
             var jwtToken = jwtTokenHandler.WriteToken(token);

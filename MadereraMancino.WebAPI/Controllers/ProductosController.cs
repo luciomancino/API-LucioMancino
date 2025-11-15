@@ -34,16 +34,24 @@ namespace MadereraMancino.WebAPI.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetAll()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<ProductoResponseDto>>(_producto.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<ProductoResponseDto>>(_producto.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todas los Productos.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
             
         }
 
@@ -51,64 +59,96 @@ namespace MadereraMancino.WebAPI.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> GetById(int? id)
         {
-            if (!id.HasValue)
+            try
             {
-                return BadRequest();
-            }
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
+                if (!id.HasValue)
+                {
+                    return BadRequest();
+                }
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
-            {
-                var producto = _producto.GetById(id.Value);
-                if (producto is null)
-                    return NotFound();
-                return Ok(_mapper.Map<ProductoResponseDto>(producto));
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var producto = _producto.GetById(id.Value);
+                    if (producto is null)
+                        return NotFound();
+                    return Ok(_mapper.Map<ProductoResponseDto>(producto));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el Producto por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(ProductoRequestDto productoRequestDto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var producto = _mapper.Map<Producto>(productoRequestDto);
-            _producto.Save(producto);
-            return Ok(producto.Id);
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var producto = _mapper.Map<Producto>(productoRequestDto);
+                _producto.Save(producto);
+                return Ok(producto.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear el Producto.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? id, ProductoRequestDto productoRequestDto)
         {
-            if (!id.HasValue)
-            { return BadRequest(); }
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var productoBack = _producto.GetById(id.Value);
-            if (productoBack is null)
-                return NotFound();
-            productoBack = _mapper.Map<Producto>(productoRequestDto);
-            _producto.Save(productoBack);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                { return BadRequest(); }
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var productoBack = _producto.GetById(id.Value);
+                if (productoBack is null)
+                    return NotFound();
+                productoBack = _mapper.Map<Producto>(productoRequestDto);
+                _producto.Save(productoBack);
+                return Ok(productoBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar el Producto.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? id)
         {
-            if (!id.HasValue)
-                return BadRequest();
-            if (!ModelState.IsValid)
-                return BadRequest();
-            var productoBack = _producto.GetById(id.Value);
-            if (productoBack is null)
-                return NotFound();
-            _producto.Delete(productoBack.Id);
-            return Ok();
+            try
+            {
+                if (!id.HasValue)
+                    return BadRequest();
+                if (!ModelState.IsValid)
+                    return BadRequest();
+                var productoBack = _producto.GetById(id.Value);
+                if (productoBack is null)
+                    return NotFound();
+                _producto.Delete(productoBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al Borrar el Producto.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 }
