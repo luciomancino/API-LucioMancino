@@ -28,8 +28,8 @@ namespace MadereraMancino.Services.AuthServices
             var key = Encoding.ASCII.GetBytes(_jwtConfig.Secret);
             var claims = new List<Claim>
             {
-                Subject = new ClaimsIdentity(new[]
-                {
+
+                
                     new Claim("Id", parametros.Id),
                     new Claim(JwtRegisteredClaimNames.Sub, parametros.Id),
                     new Claim(JwtRegisteredClaimNames.Name, parametros.UserName),
